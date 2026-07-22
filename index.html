@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidForge AI — टेक्स्ट डालो, पिक्चर बनाओ 🎬</title>
+<meta name="description" content="AI se long animated videos banao — ek line me. Agent Mode jo khud script, scenes, voiceover aur render kare.">
+<style>
+  :root{
+    --bg:#07070f;
+    --bg2:#0d0d1c;
+    --card:rgba(255,255,255,.04);
+    --border:rgba(255,255,255,.09);
+    --txt:#e8e8f2;
+    --muted:#9a9ab0;
+    --purple:#7c3aed;
+    --blue:#3b82f6;
+    --pink:#ec4899;
+    --green:#22c55e;
+    --grad:linear-gradient(135deg,#7c3aed 0%,#3b82f6 50%,#ec4899 100%);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif;
+    background:var(--bg);color:var(--txt);overflow-x:hidden;
+  }
+  ::selection{background:var(--purple);color:#fff}
+  ::-webkit-scrollbar{width:9px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:#2a2a45;border-radius:9px}
+
+  #bg-particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 24px}
+
+  /* ===== NAV ===== */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(7,7,15,.75);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-in{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;text-decoration:none;color:var(--txt)}
+  .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-size:17px;box-shadow:0 4px 18px rgba(124,58,237,.5);animation:logoPulse 3s ease-in-out infinite}
+  @keyframes logoPulse{0%,100%{box-shadow:0 4px 18px rgba(124,58,237,.5)}50%{box-shadow:0 4px 28px rgba(236,72,153,.65)}}
+  .nav-links{display:flex;gap:26px;align-items:center}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:#fff}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:none;
+    font-weight:700;font-size:15px;color:#fff;text-decoration:none;
+    padding:12px 24px;border-radius:14px;background:var(--grad);
+    box-shadow:0 6px 24px rgba(124,58,237,.4);
+    transition:transform .18s,box-shadow .18s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(236,72,153,.45)}
+  .btn:active{transform:translateY(0)}
+  .btn.small{padding:9px 18px;font-size:14px;border-radius:11px}
+  .btn.ghost{background:var(--card);border:1px solid var(--border);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--purple);box-shadow:0 6px 20px rgba(124,58,237,.25)}
+  .btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+
+  /* ===== HERO ===== */
+  .hero{padding:84px 0 64px;text-align:center}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.4);
+    color:#c4b5fd;padding:8px 18px;border-radius:99px;font-size:13.5px;font-weight:600;
+    animation:fadeUp .7s ease both;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  h1{
+    margin:26px auto 0;max-width:850px;
+    font-size:clamp(38px,6.4vw,72px);line-height:1.08;font-weight:800;letter-spacing:-1.5px;
+    animation:fadeUp .7s .12s ease both;
+  }
+  h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{
+    margin:22px auto 0;max-width:640px;color:var(--muted);font-size:clamp(16px,2.2vw,19px);line-height:1.65;
+    animation:fadeUp .7s .24s ease both;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+  .prompt-hero{
+    max-width:720px;margin:38px auto 0;display:flex;gap:10px;
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:10px;
+    animation:fadeUp .7s .36s ease both;transition:border-color .25s;
+  }
+  .prompt-hero:focus-within{border-color:var(--purple);box-shadow:0 0 0 4px rgba(124,58,237,.15)}
+  .prompt-hero input{
+    flex:1;background:transparent;border:none;outline:none;color:#fff;
+    font-size:16px;padding:10px 12px;min-width:0;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px;animation:fadeUp .7s .44s ease both}
+  .chip{
+    cursor:pointer;font-size:13.5px;color:var(--muted);
+    background:var(--card);border:1px solid var(--border);
+    padding:8px 15px;border-radius:99px;transition:all .2s;
+  }
+  .chip:hover{color:#fff;border-color:var(--purple);transform:translateY(-2px)}
+  .stats{
+    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:52px;
+    animation:fadeUp .7s .54s ease both;
+  }
+  .stat{
+    min-width:150px;background:var(--card);border:1px solid var(--border);
+    border-radius:16px;padding:16px 22px;
+  }
+  .stat b{display:block;font-size:22px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{font-size:13px;color:var(--muted)}
+
+  /* ===== SECTIONS ===== */
+  section{padding:76px 0}
+  .sec-head{text-align:center;margin-bottom:48px}
+  .sec-head .kicker{color:#c4b5fd;font-weight:700;font-size:13px;letter-spacing:2.5px;text-transform:uppercase}
+  .sec-head h2{font-size:clamp(28px,4.5vw,44px);font-weight:800;margin-top:10px;letter-spacing:-.8px}
+  .sec-head p{color:var(--muted);margin-top:12px;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+  /* ===== STUDIO (Agent Demo) ===== */
+  #studio .panel{
+    background:var(--bg2);border:1px solid var(--border);border-radius:24px;
+    padding:26px;display:grid;grid-template-columns:1fr 1.15fr;gap:26px;
+    box-shadow:0 30px 90px rgba(0,0,0,.5);
+  }
+  .console{
+    background:#05050c;border:1px solid var(--border);border-radius:16px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13.5px;line-height:1.75;overflow:hidden;display:flex;flex-direction:column;
+    min-height:420px;
+  }
+  .console-top{
+    display:flex;align-items:center;gap:8px;padding:11px 16px;
+    background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);
+  }
+  .console-top .c{width:11px;height:11px;border-radius:50%}
+  .console-top span{margin-left:8px;color:var(--muted);font-size:12.5px}
+  .console-body{padding:18px;overflow-y:auto;flex:1;max-height:440px}
+  .console-body .line{white-space:pre-wrap;word-break:break-word}
+  .console-body .ok{color:#4ade80}
+  .console-body .info{color:#93c5fd}
+  .console-body .sys{color:#c084fc}
+  .console-body .dim{color:#6b6b85}
+  .cursor{display:inline-block;width:8px;height:15px;background:#c084fc;animation:blink 1s infinite;vertical-align:-2px}
+
+  .stage{display:flex;flex-direction:column;gap:14px}
+  .video-frame{
+    position:relative;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;
+    border:1px solid var(--border);
+  }
+  #videoCanvas{width:100%;height:100%;display:block}
+  .video-idle{
+    position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;
+    align-items:center;justify-content:center;color:var(--muted);
+    background:radial-gradient(ellipse at center,rgba(124,58,237,.14),transparent 70%);
+  }
+  .video-idle .play-ico{
+    width:74px;height:74px;border-radius:50%;background:var(--grad);
+    display:grid;place-items:center;font-size:26px;color:#fff;
+    box-shadow:0 10px 40px rgba(124,58,237,.5);animation:float 3s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  .controls{display:flex;align-items:center;gap:12px}
+  .controls .ico-btn{
+    width:42px;height:42px;border-radius:12px;border:1px solid var(--border);
+    background:var(--card);color:#fff;font-size:16px;cursor:pointer;
+    display:grid;place-items:center;transition:all .2s;flex:none;
+  }
+  .controls .ico-btn:hover{border-color:var(--purple);transform:scale(1.06)}
+  .seek{
+    flex:1;height:8px;background:rgba(255,255,255,.09);border-radius:99px;cursor:pointer;position:relative;
+  }
+  .seek .fill{
+    position:absolute;inset:0 auto 0 0;width:0%;border-radius:99px;background:var(--grad);
+  }
+  .time{font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted);flex:none;min-width:86px;text-align:right}
+  .progress-outer{
+    height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;
+  }
+  .progress-inner{height:100%;width:0%;background:var(--grad);border-radius:99px;transition:width .45s ease}
+  .render-status{font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+
+  /* ===== FEATURES ===== */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;
+    transition:transform .25s,border-color .25s,box-shadow .25s;
+    opacity:0;transform:translateY(26px);
+  }
+  .card.show{opacity:1;transform:translateY(0);transition:opacity .6s,transform .6s,border-color .25s,box-shadow .25s}
+  .card:hover{transform:translateY(-6px);border-color:rgba(124,58,237,.55);box-shadow:0 18px 50px rgba(124,58,237,.18)}
+  .card .fico{
+    width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;
+    background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.35);font-size:24px;
+  }
+  .card h3{font-size:19px;font-weight:700;margin-bottom:9px}
+  .card p{color:var(--muted);font-size:14.5px;line-height:1.65}
+
+  /* ===== HOW ===== */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .step{
+    position:relative;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 26px;
+  }
+  .step .num{
+    font-size:15px;font-weight:800;color:#fff;background:var(--grad);
+    width:40px;height:40px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;
+  }
+  .step h3{font-size:18px;margin-bottom:8px}
+  .step p{color:var(--muted);font-size:14.5px;line-height:1.6}
+
+  /* ===== PRICING ===== */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+  .plan{
+    background:var(--card);border:1px solid var(--border);border-radius:22px;padding:32px 28px;
+    display:flex;flex-direction:column;gap:8px;position:relative;transition:transform .25s,border-color .25s;
+  }
+  .plan:hover{transform:translateY(-6px)}
+  .plan.hot{border-color:var(--purple);background:linear-gradient(180deg,rgba(124,58,237,.14),rgba(255,255,255,.03));box-shadow:0 20px 60px rgba(124,58,237,.22)}
+  .plan .tag{
+    position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    background:var(--grad);color:#fff;font-size:12px;font-weight:700;
+    padding:5px 14px;border-radius:99px;white-space:nowrap;
+  }
+  .plan h3{font-size:17px;color:var(--muted);font-weight:600}
+  .plan .price{font-size:40px;font-weight:800;margin:6px 0 2px}
+  .plan .price small{font-size:15px;color:var(--muted);font-weight:500}
+  .plan ul{list-style:none;margin:18px 0 24px;display:flex;flex-direction:column;gap:11px;flex:1}
+  .plan li{color:var(--muted);font-size:14.5px;display:flex;gap:10px;align-items:flex-start}
+  .plan li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
+  .plan li.no{opacity:.45}
+  .plan li.no::before{content:"✕";color:#ef4444}
+
+  /* ===== FOOTER ===== */
+  footer{border-top:1px solid var(--border);padding:42px 0;text-align:center;color:var(--muted);font-size:14px}
+  footer .fgrad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+  footer p{margin-top:8px}
+  footer .tiny{font-size:12px;opacity:.6;margin-top:14px}
+
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.show{opacity:1;transform:translateY(0)}
+
+  @media(max-width:900px){
+    #studio .panel{grid-template-columns:1fr}
+    .grid,.steps,.plans{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .hero{padding:60px 0 46px}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-particles"></canvas>
+
+<nav>
+  <div class="nav-in">
+    <a class="logo" href="#top"><span class="logo-mark">🎬</span>VidForge<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">&nbsp;AI</span></a>
+    <div class="nav-links">
+      <a href="#studio">Agent Demo</a>
+      <a href="#features">Features</a>
+      <a href="#how">Kaise Kaam Karta Hai</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <a class="btn small" href="#studio">🚀 Try Free</a>
+  </div>
+</nav>
+
+<div class="wrap" id="top">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge"><span class="dot"></span>&nbsp;AI Video Agent — Ab Hindi me bhi</span>
+    <h1>Sirf <span class="grad">ek line likho</span>,<br>poori animated <span class="grad">video banegi</span></h1>
+    <p class="sub">VidForge ka Agent Mode khud script likhega, scenes design karega, animation render karega aur voiceover jodega. Aap sirf idea do — <b>टेक्स्ट डालो। पिक्चर बनाओ।</b> 🍿</p>
+
+    <form class="prompt-hero" id="heroForm">
+      <input id="heroPrompt" type="text" placeholder="Jaise: Ek motivational video — sapno ki udaan ke baare me..." autocomplete="off">
+      <button class="btn" type="submit">✨ Generate</button>
+    </form>
+
+    <div class="chips">
+      <span class="chip" data-p="Ek motivational video — sapno ki udaan ke baare me">🌅 Motivational</span>
+      <span class="chip" data-p="Science video — black hole kaise kaam karta hai">🪐 Science Explainer</span>
+      <span class="chip" data-p="Bachcho ki kahani — sher aur chuhe ki dosti">🦁 Kids Story</span>
+      <span class="chip" data-p="Product launch teaser — futuristic sneaker brand">👟 Product Teaser</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>4K</b><span>tak render quality</span></div>
+      <div class="stat"><b>10+ min</b><span>lambe videos</span></div>
+      <div class="stat"><b>45+</b><span>AI voices (हिंदी + English)</span></div>
+      <div class="stat"><b>0</b><span>editing skills chahiye</span></div>
+    </div>
+  </header>
+
+  <!-- STUDIO / AGENT DEMO -->
+  <section id="studio">
+    <div class="sec-head reveal">
+      <div class="kicker">Agent Mode — Live Demo</div>
+      <h2>Dekho agent ko <span class="grad" style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">kaam karte hue</span></h2>
+      <p>Prompt likho aur Enter dabao. Agent aapke saamne script → scenes → animation → render karega. Ye ek browser-based demo version hai.</p>
+    </div>
+
+    <div class="panel reveal">
+      <!-- LEFT: console -->
+      <div>
+        <form class="prompt-hero" id="studioForm" style="margin:0 0 14px;border-radius:14px">
+          <input id="studioPrompt" type="text" placeholder="Apna video idea yahan likho..." autocomplete="off">
+          <button class="btn small" type="submit" id="genBtn">✨ Go</button>
+        </form>
+        <div class="console">
+          <div class="console-top">
+            <span class="c" style="background:#ff5f57"></span>
+            <span class="c" style="background:#febc2e"></span>
+            <span class="c" style="background:#28c840"></span>
+            <span>vidforge-agent — v2.1</span>
+          </div>
+          <div class="console-body" id="consoleBody">
+            <div class="line sys">&gt; VidForge Agent ready hai. 🎬</div>
+            <div class="line dim">&gt; Prompt do, main video bana dunga...<span class="cursor"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: video -->
+      <div class="stage">
+        <div class="video-frame">
+          <canvas id="videoCanvas" width="960" height="540"></canvas>
+          <div class="video-idle" id="videoIdle">
+            <div class="play-ico">▶</div>
+            <div>Aapki animated video yahan banegi</div>
+          </div>
+        </div>
+        <div class="render-status">
+          <span id="statusText">Status: idle</span>
+          <span id="statusPct">0%</span>
+        </div>
+        <div class="progress-outer"><div class="progress-inner" id="renderBar"></div></div>
+        <div class="controls">
+          <button class="ico-btn" id="playBtn" title="Play/Pause">▶</button>
+          <div class="seek" id="seekBar"><div class="fill" id="seekFill"></div></div>
+          <span class="time" id="timeLabel">0:00 / 0:16</span>
+          <button class="ico-btn" id="dlBtn" title="Video download (WebM)">⬇</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="sec-head reveal">
+      <div class="kicker">Features</div>
+      <h2>Sab kuch jo ek video creator ko chahiye</h2>
+      <p>Script se leke final export tak — poora pipeline ek hi jagah, pura automatic.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="fico">🎬</div><h3>Long Videos, Chapters me</h3><p>10+ minute tak ki videos — intro, chapters aur outro ke saath. Agent khud story ka flow banata hai, sirf clips nahi jodta.</p></div>
+      <div class="card"><div class="fico">🤖</div><h3>Agent Mode</h3><p>Arena-style agent jo step-by-step sochta hai: prompt samjho → script likho → scenes banao → animate karo → render karo. Sab aapki aankhon ke saamne.</p></div>
+      <div class="card"><div class="fico">🗣️</div><h3>Hindi + English Voiceovers</h3><p>45+ realistic AI voices — Hinglish narration tak. Emotion, speed aur pitch sab control karo.</p></div>
+      <div class="card"><div class="fico">🎨</div><h3>Full Animation Styles</h3><p>2D cartoon, anime, cinematic 3D, whiteboard — har scene ka style alag ho sakta hai. Ek click me style change.</p></div>
+      <div class="card"><div class="fico">🎵</div><h3>Auto Music & SFX</h3><p>Mood ke hisaab se background score aur sound effects — bina copyright tension ke. Beat-sync transitions bhi.</p></div>
+      <div class="card"><div class="fico">📱</div><h3>Reels & Shorts Export</h3><p>Long video se auto-cut 9:16 shorts — hooks aur subtitles ke saath. YouTube, Insta, sab ke liye ready.</p></div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="sec-head reveal">
+      <div class="kicker">Kaise Kaam Karta Hai</div>
+      <h2>3 steps. Bas itna hi.</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step"><div class="num">1</div><h3>Idea likho ✍️</h3><p>Ek line me batao video kis baare me hai — Hindi ya English, koi bhi topic.</p></div>
+      <div class="step"><div class="num">2</div><h3>Agent kaam kare 🤖</h3><p>Script, scenes, animation, voiceover, music — sab automatic. Aap chai piyo. ☕</p></div>
+      <div class="step"><div class="num">3</div><h3>Download & Share 🚀</h3><p>4K tak export karo, ya seedha YouTube/Instagram par publish karo.</p></div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="sec-head reveal">
+      <div class="kicker">Pricing</div>
+      <h2>Simple plans, koi jhanjhat nahi</h2>
+      <p>Free me shuru karo. Jab channel bade, tab upgrade karo.</p>
+    </div>
+    <div class="plans reveal">
+      <div class="plan">
+        <h3>🏠 Shuruaat</h3>
+        <div class="price">₹0<small>/mahina</small></div>
+        <ul>
+          <li>3 videos / mahina (1 min tak)</li>
+          <li>720p export</li>
+          <li>5 AI voices</li>
+          <li class="no">Watermark-free</li>
+          <li class="no">4K render</li>
+        </ul>
+        <a class="btn ghost" href="#studio" style="justify-content:center">Start Free</a>
+      </div>
+      <div class="plan hot">
+        <span class="tag">⭐ Sabse Popular</span>
+        <h3>🚀 Pro Creator</h3>
+        <div class="price">₹499<small>/mahina</small></div>
+        <ul>
+          <li>30 videos / mahina (10 min tak)</li>
+          <li>1080p Full HD export</li>
+          <li>Sab 45+ voices (हिंदी + English)</li>
+          <li>Watermark-free + auto shorts</li>
+          <li class="no">4K render</li>
+        </ul>
+        <a class="btn" href="#studio" style="justify-content:center">Upgrade to Pro</a>
+      </div>
+      <div class="plan">
+        <h3>🏢 Studio</h3>
+        <div class="price">₹1,499<small>/mahina</small></div>
+        <ul>
+          <li>Unlimited videos + 4K render</li>
+          <li>Custom voice clone</li>
+          <li>API access + team seats</li>
+          <li>Priority GPU queue</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a class="btn ghost" href="#studio" style="justify-content:center">Contact Sales</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div style="font-size:18px">Banaya gaya <span style="color:#ef4444">❤️</span> se — <span class="fgrad">VidForge AI</span>, creators ke liye 🇮🇳</div>
+    <p>टेक्स्ट डालो। पिक्चर बनाओ। 🍿</p>
+    <p class="tiny">Ye website ka demo version hai — uper wala studio ek browser-based animated preview hai. Real AI video generation ke liye backend me video API (Runway / Veo / Pika) connect karni hoti hai.</p>
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   BACKGROUND PARTICLES
+============================================================ */
+(function(){
+  const cv=document.getElementById('bg-particles'),cx=cv.getContext('2d');
+  let W,H,pts=[];
+  function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;
+    pts=Array.from({length:Math.min(90,innerWidth/14)},()=>({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,
+      r:Math.random()*1.8+.6,
+      c:['124,58,237','59,130,246','236,72,153'][Math.floor(Math.random()*3)]
+    }));
+  }
+  rs();addEventListener('resize',rs);
+  (function loop(){
+    cx.clearRect(0,0,W,H);
+    for(const p of pts){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+      cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);
+      cx.fillStyle='rgba('+p.c+',.6)';cx.fill();
+    }
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<130){cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);
+        cx.strokeStyle='rgba(124,58,237,'+(0.12*(1-d/130))+')';cx.stroke();}
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+(function(){
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target);}});
+  },{threshold:.12});
+  document.querySelectorAll('.reveal,.card').forEach(el=>io.observe(el));
+  document.querySelectorAll('.grid .card').forEach((el,i)=>{el.style.transitionDelay=(i*.08)+'s'});
+})();
+
+/* ============================================================
+   AGENT SIMULATION
+============================================================ */
+const consoleBody=document.getElementById('consoleBody');
+const renderBar=document.getElementById('renderBar');
+const statusText=document.getElementById('statusText');
+const statusPct=document.getElementById('statusPct');
+const videoIdle=document.getElementById('videoIdle');
+let running=false;
+
+function line(text,cls){
+  const d=document.createElement('div');
+  d.className='line '+(cls||'');
+  d.textContent=text;
+  consoleBody.appendChild(d);
+  consoleBody.scrollTop=consoleBody.scrollHeight;
+  return d;
+}
+function typeLine(text,cls,speed){
+  return new Promise(res=>{
+    const d=document.createElement('div');
+    d.className='line '+(cls||'');
+    const c=document.createElement('span');c.className='cursor';
+    consoleBody.appendChild(d);d.appendChild(c);
+    let i=0;
+    (function t(){
+      if(i<text.length){
+        d.insertBefore(document.createTextNode(text[i++]),c);
+        consoleBody.scrollTop=consoleBody.scrollHeight;
+        setTimeout(t,speed||10);
+      }else{c.remove();res();}
+    })();
+  });
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function setProg(p,txt){
+  renderBar.style.width=p+'%';
+  statusPct.textContent=Math.round(p)+'%';
+  if(txt)statusText.textContent='Status: '+txt;
+}
+
+async function runAgent(promptRaw){
+  if(running)return;
+  running=true;
+  const prompt=(promptRaw||'Ek motivational video — sapno ki udaan ke baare me').slice(0,90);
+  document.getElementById('genBtn').disabled=true;
+  videoIdle.style.display='flex';
+  setProg(0,'shuru ho raha hai...');
+  consoleBody.innerHTML='';
+
+  line('> VidForge Agent v2.1 shuru...','sys');
+  line('> Prompt: "'+prompt+'"','dim');
+  await wait(400);
+
+  const steps=[
+    {p:14,t:'[1/6] Prompt analyze ho raha hai…',logs:[
+      '  ✓ Language: Hinglish / हिंदी',
+      '  ✓ Mood: Cinematic, uplifting',
+      '  ✓ Target duration: short demo cut']},
+    {p:30,t:'[2/6] Script likhi ja rahi hai…',logs:[
+      '  ✓ Scene 1: Title reveal',
+      '  ✓ Scene 2: Ocean sunset (hope)',
+      '  ✓ Scene 3: Night city (hustle)',
+      '  ✓ Scene 4: Space journey (dream big)',
+      '  ✓ Scene 5: Outro + logo']},
+    {p:46,t:'[3/6] Voiceover generate ho raha hai…',logs:[
+      '  ✓ Voice: "Kabir" (Hindi, deep, male)',
+      '  ✓ 128 words, emotion-synced']},
+    {p:70,t:'[4/6] Animation render ho raha hai…',logs:[
+      '  ▓▓▓▓▓▓▓▓▓▓▓▓ frames: 960/960 ✓',
+      '  ✓ Transitions: cinematic crossfade']},
+    {p:86,t:'[5/6] Music & SFX mix ho raha hai…',logs:[
+      '  ✓ BG score: "Epic Horizon" (royalty-free)',
+      '  ✓ Beat-sync: ON']},
+    {p:100,t:'[6/6] Final export…',logs:[
+      '  ✓ 1080p • 30fps • H.264-ready',
+      '  ✅ Video ready! Preview aur download karo ↓']}
+  ];
+
+  for(const s of steps){
+    setProg(s.p,s.t.replace(/\[.?\d\/6\]\s*/,''));
+    await typeLine(s.t,'info',9);
+    for(const l of s.logs){await wait(180);line(l,l.indexOf('▓')>=0?'dim':'ok');}
+    await wait(220);
+  }
+
+  videoIdle.style.display='none';
+  video.t=0;video.playing=true;
+  updatePlayBtn();updateDlState();
+  statusText.textContent='Status: ✅ render complete — demo preview playing';
+  document.getElementById('genBtn').disabled=false;
+  running=false;
+}
+
+document.getElementById('heroForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const v=document.getElementById('heroPrompt').value;
+  document.getElementById('studioPrompt').value=v;
+  document.getElementById('studio').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>runAgent(v),650);
+});
+document.getElementById('studioForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  runAgent(document.getElementById('studioPrompt').value);
+});
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.getElementById('heroPrompt').value=c.dataset.p;
+    document.getElementById('heroForm').dispatchEvent(new Event('submit'));
+  });
+});
+
+/* ============================================================
+   DEMO VIDEO — canvas animation engine (16 sec, loops)
+============================================================ */
+const DURATION=16;
+const canvas=document.getElementById('videoCanvas');
+const ctx=canvas.getContext('2d');
+const W=960,H=540;
+const video={t:0,playing:false,last:performance.now(),rendered:false};
+
+/* deterministic scene assets */
+const stars=Array.from({length:110},()=>({x:Math.random()*W,y:Math.random()*H*.72,r:Math.random()*1.5+.3,tw:Math.random()*7}));
+const buildings=Array.from({length:16},(_,i)=>{
+  const bw=40+((i*53)%40),bh=90+((i*97)%160);
+  return{x:i*62-10,w:bw,h:bh,win:Array.from({length:6*8},(_,k)=>((i*31+k*17)%10)<6)};
+});
+const spaceStars=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*H,s:.4+Math.random()*2.4}));
+
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function subtitle(txt){
+  ctx.save();
+  ctx.font='600 22px -apple-system,"Segoe UI","Noto Sans Devanagari",sans-serif';
+  const w=ctx.measureText(txt).width+44;
+  ctx.fillStyle='rgba(0,0,0,.55)';roundRect((W-w)/2,H-64,w,40,20);ctx.fill();
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(txt,W/2,H-37);
+  ctx.restore();
+}
+function sceneTag(txt){
+  ctx.save();
+  ctx.font='600 13px ui-monospace,monospace';ctx.textAlign='left';
+  ctx.fillStyle='rgba(0,0,0,.5)';roundRect(18,16,ctx.measureText(txt).width+24,26,13);ctx.fill();
+  ctx.fillStyle='#c4b5fd';ctx.fillText(txt,30,34);
+  ctx.restore();
+}
+function watermark(){
+  ctx.save();ctx.font='600 12px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.textAlign='right';
+  ctx.fillText('VidForge AI • Demo',W-16,H-16);ctx.restore();
+}
+
+/* --- Scene 1: title --- */
+function sTitle(t){
+  const g=ctx.createRadialGradient(W/2,H/2,40,W/2,H/2,W/1.2);
+  g.addColorStop(0,'#231045');g.addColorStop(1,'#05050c');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<40;i++){
+    const a=i/40*Math.PI*2+t*0.6, r=220-((t*70)%170);
+    ctx.fillStyle='rgba(139,92,246,'+Math.max(0,1-((t*70)%170)/170)*.8+')';
+    ctx.beginPath();ctx.arc(W/2+Math.cos(a)*r,H/2+Math.sin(a)*r*.6,2.4,0,7);ctx.fill();
+  }
+  const sc=Math.min(1,t/1.1)*1.02;
+  ctx.save();ctx.translate(W/2,H/2-30);ctx.scale(sc,sc);
+  ctx.font='800 64px -apple-system,"Segoe UI",sans-serif';ctx.textAlign='center';
+  const tg=ctx.createLinearGradient(-260,0,260,0);
+  tg.addColorStop(0,'#a78bfa');tg.addColorStop(.5,'#60a5fa');tg.addColorStop(1,'#f472b6');
+  ctx.shadowColor='rgba(124,58,237,.8)';ctx.shadowBlur=38;
+  ctx.fillStyle=tg;ctx.fillText('SAPNO KI UDAAN',0,10);
+  ctx.restore();
+  ctx.save();ctx.font='500 22px -apple-system,"Noto Sans Devanagari",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,'+Math.min(1,Math.max(0,t-1)*1)+')';
+  ctx.textAlign='center';ctx.fillText('एक AI की बनाई कहानी',W/2,H/2+56);ctx.restore();
+  subtitle('Har bada safar ek chhote sapne se shuru hota hai…');
+}
+
+/* --- Scene 2: ocean sunset --- */
+function sOcean(t){
+  const sk=ctx.createLinearGradient(0,0,0,H);
+  sk.addColorStop(0,'#2d1b4e');sk.addColorStop(.5,'#e0653a');sk.addColorStop(.68,'#f5a54b');sk.addColorStop(.7,'#1a2a52');sk.addColorStop(1,'#0b1638');
+  ctx.fillStyle=sk;ctx.fillRect(0,0,W,H);
+  const sy=H*.52-Math.sin(t*.35)*16;
+  const sg=ctx.createRadialGradient(W*.62,sy,8,W*.62,sy,120);
+  sg.addColorStop(0,'rgba(255,236,190,.95)');sg.addColorStop(.3,'rgba(255,190,90,.75)');sg.addColorStop(1,'rgba(255,150,60,0)');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.arc(W*.62,sy,120,0,7);ctx.fill();
+  ctx.fillStyle='#ffe9b0';ctx.beginPath();ctx.arc(W*.62,sy,34,0,7);ctx.fill();
+  for(let i=0;i<3;i++){
+    const cx2=((t*24+i*260)%(W+160))-80, cy=90+i*46;
+    ctx.fillStyle='rgba(255,255,255,.28)';
+    ctx.beginPath();ctx.ellipse(cx2,cy,52,14,0,0,7);ctx.ellipse(cx2+34,cy+6,36,11,0,0,7);ctx.ellipse(cx2-36,cy+7,30,10,0,0,7);ctx.fill();
+  }
+  const horizon=H*.70;
+  for(let l=0;l<4;l++){
+    ctx.beginPath();ctx.moveTo(0,H);
+    for(let x=0;x<=W;x+=8){
+      ctx.lineTo(x,horizon+l*34+Math.sin(x*.02+t*(1.1+l*.25))*8*(l*.35+1));
+    }
+    ctx.lineTo(W,H);ctx.closePath();
+    ctx.fillStyle=['rgba(14,30,70,.85)','rgba(20,40,90,.8)','rgba(10,22,55,.9)','rgba(6,14,38,.95)'][l];
+    ctx.fill();
+  }
+  for(let b=0;b<3;b++){
+    const bx=(t*38+b*300)%(W+80)-40,by=120+b*38+Math.sin(t*2+b)*6;
+    ctx.strokeStyle='rgba(30,20,50,.9)';ctx.lineWidth=2.4;
+    ctx.beginPath();ctx.moveTo(bx-10,by);ctx.quadraticCurveTo(bx-4,by-6,bx,by);
+    ctx.quadraticCurveTo(bx+4,by-6,bx+10,by);ctx.stroke();
+  }
+  subtitle('Jab tak samundar saath hai, ummeed nahin haarti.');
+}
+
+/* --- Scene 3: night city --- */
+function sCity(t){
+  const sk=ctx.createLinearGradient(0,0,0,H);
+  sk.addColorStop(0,'#070b22');sk.addColorStop(1,'#131a3d');
+  ctx.fillStyle=sk;ctx.fillRect(0,0,W,H);
+  for(const s of stars){
+    ctx.fillStyle='rgba(255,255,255,'+(0.35+0.5*Math.abs(Math.sin(t*1.4+s.tw)))+')';
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();
+  }
+  ctx.save();ctx.shadowColor='rgba(230,240,255,.8)';ctx.shadowBlur=30;
+  ctx.fillStyle='#eef3ff';ctx.beginPath();ctx.arc(W*.8,H*.2,30,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle='#0a0f2c';ctx.beginPath();ctx.arc(W*.8-12,H*.2-6,26,0,7);ctx.fill();
+  for(const b of buildings){
+    const by=H-40;
+    ctx.fillStyle='#0d1130';ctx.fillRect(b.x,by-b.h,b.w,b.h);
+    const cols=4,rows=8,cw=b.w/cols,ch=b.h/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const on=b.win[(r*cols+c)%b.win.length]&&((Math.floor(t)+r*cols+c)%14!==0);
+      ctx.fillStyle=on?'rgba(255,214,120,.85)':'rgba(255,255,255,.05)';
+      ctx.fillRect(b.x+c*cw+cw*.28,by-b.h+r*ch+ch*.3,cw*.36,ch*.34);
+    }
+  }
+  ctx.fillStyle='#05060f';ctx.fillRect(0,H-40,W,40);
+  subtitle('Raat ka shahar — jahan mehnat kabhi soti nahin.');
+}
+
+/* --- Scene 4: space --- */
+function sSpace(t){
+  ctx.fillStyle='#02020a';ctx.fillRect(0,0,W,H);
+  ctx.save();
+  for(const s of spaceStars){
+    const x=((s.x-t*60*s.s)%W+W)%W;
+    ctx.fillStyle='rgba(255,255,255,'+(.3+s.s*.25)+')';
+    ctx.beginPath();ctx.arc(x,s.y,s.s*.8,0,7);ctx.fill();
+  }
+  ctx.restore();
+  const px=W*.68,py=H*.42;
+  const pg=ctx.createRadialGradient(px-16,py-16,6,px,py,80);
+  pg.addColorStop(0,'#c4b5fd');pg.addColorStop(.6,'#6d28d9');pg.addColorStop(1,'#1e1b4b');
+  ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,py,58,0,7);ctx.fill();
+  ctx.save();ctx.translate(px,py);ctx.rotate(-.35);
+  ctx.strokeStyle='rgba(167,139,250,.55)';ctx.lineWidth=5;
+  ctx.beginPath();ctx.ellipse(0,0,108,26,0,0,7);ctx.stroke();ctx.restore();
+  const mx=px-180+Math.sin(t*.5)*10,my=py+70+Math.cos(t*.5)*8;
+  ctx.fillStyle='#9ca3af';ctx.beginPath();ctx.arc(mx,my,14,0,7);ctx.fill();
+  const sh=(t*140)%(W*1.6)-W*.3;
+  if(sh<W){ctx.save();const lg=ctx.createLinearGradient(sh,0,sh+90,90);
+    lg.addColorStop(0,'rgba(255,255,255,0)');lg.addColorStop(1,'rgba(255,255,255,.9)');
+    ctx.strokeStyle=lg;ctx.lineWidth=2.4;
+    ctx.beginPath();ctx.moveTo(sh-90,45);ctx.lineTo(sh,135);ctx.stroke();ctx.restore();}
+  subtitle('Aur ek din woh sapna… sitaaron tak pahunch gaya. 🚀');
+}
+
+/* --- Scene 5: outro --- */
+function sOutro(t){
+  const g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#160b33');g.addColorStop(.5,'#0b1030');g.addColorStop(1,'#33101f');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const pulse=1+Math.sin(t*3)*.03;
+  ctx.save();ctx.translate(W/2,H/2-14);ctx.scale(pulse,pulse);
+  const tg=ctx.createLinearGradient(-200,0,200,0);
+  tg.addColorStop(0,'#a78bfa');tg.addColorStop(.5,'#60a5fa');tg.addColorStop(1,'#f472b6');
+  ctx.font='800 58px -apple-system,"Segoe UI",sans-serif';ctx.textAlign='center';
+  ctx.shadowColor='rgba(124,58,237,.9)';ctx.shadowBlur=44;
+  ctx.fillStyle=tg;ctx.fillText('VidForge AI',0,10);ctx.restore();
+  ctx.save();ctx.textAlign='center';
+  ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='600 20px -apple-system,"Noto Sans Devanagari",sans-serif';
+  ctx.fillText('टेक्स्ट डालो। पिक्चर बनाओ।',W/2,H/2+62);
+  ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='500 15px -apple-system,sans-serif';
+  ctx.fillText('vidforge-ai • demo ke liye banaya gaya',W/2,H/2+94);ctx.restore();
+  subtitle('Aapka agla video sirf ek line door hai. ✨');
+}
+
+function drawVideo(t){
+  const segs=[
+    {end:3,fn:sTitle,tag:'Scene 1 · Title'},
+    {end:7,fn:sOcean,tag:'Scene 2 · Ocean Sunset'},
+    {end:11,fn:sCity,tag:'Scene 3 · Night City'},
+    {end:14,fn:sSpace,tag:'Scene 4 · Space'},
+    {end:16,fn:sOutro,tag:'Scene 5 · Outro'}
+  ];
+  let prev=0,cur=segs[segs.length-1];
+  for(const s of segs){if(t<s.end){cur=s;break;}prev=s.end;}
+  cur.fn(t-prev);
+  sceneTag(cur.tag);
+  watermark();
+}
+
+function vLoop(now){
+  const dt=(now-video.last)/1000;video.last=now;
+  if(video.playing){video.t=(video.t+dt)%DURATION;}
+  if(!videoIdle.style.display||videoIdle.style.display==='none'||video.playing){
+    drawVideo(video.t);
+  }
+  const pct=video.t/DURATION*100;
+  document.getElementById('seekFill').style.width=pct+'%';
+  document.getElementById('timeLabel').textContent=
+    Math.floor(video.t/60)+':'+String(Math.floor(video.t%60)).padStart(2,'0')+' / 0:'+DURATION;
+  requestAnimationFrame(vLoop);
+}
+requestAnimationFrame(vLoop);
+
+const playBtn=document.getElementById('playBtn');
+function updatePlayBtn(){playBtn.textContent=video.playing?'⏸':'▶';}
+playBtn.addEventListener('click',()=>{
+  if(videoIdle.style.display!=='none'){return;}
+  video.playing=!video.playing;updatePlayBtn();
+});
+document.getElementById('seekBar').addEventListener('click',e=>{
+  if(videoIdle.style.display!=='none'){return;}
+  const r=e.currentTarget.getBoundingClientRect();
+  video.t=Math.min(Math.max((e.clientX-r.left)/r.width,0),1)*DURATION;
+});
+
+/* ---------- Download: canvas ko real video file (WebM) me record karo ---------- */
+const dlBtn=document.getElementById('dlBtn');
+function updateDlState(){
+  const ok='MediaRecorder' in window&&!!canvas.captureStream;
+  dlBtn.style.display=ok?'grid':'none';
+}
+updateDlState();
+dlBtn.addEventListener('click',()=>{
+  if(videoIdle.style.display!=='none'||dlBtn.disabled)return;
+  let mime='';
+  for(const ty of ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']){
+    if(MediaRecorder.isTypeSupported(ty)){mime=ty;break;}
+  }
+  const stream=canvas.captureStream(30);
+  const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:6000000}:undefined);
+  const chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  rec.onstop=()=>{
+    const blob=new Blob(chunks,{type:mime||'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='vidforge-video.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    dlBtn.disabled=false;dlBtn.textContent='⬇';
+    statusText.textContent='Status: ✅ video downloaded (WebM)';
+  };
+  video.t=0;video.playing=true;updatePlayBtn();
+  rec.start(250);
+  dlBtn.disabled=true;dlBtn.textContent='●';
+  statusText.textContent='Status: recording… video ban rahi hai 🎥';
+  setTimeout(()=>{rec.stop();video.playing=false;updatePlayBtn();},DURATION*1000+400);
+});
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e6af9889c71043',t:'MTc4NDYwMDAwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
